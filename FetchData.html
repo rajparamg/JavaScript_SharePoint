@@ -1,0 +1,103 @@
+//fetch data from a sharePoint List in JavaScript
+//or To Read Data from the SharePoint list
+//Method 1-It is purely written in JavaScript.It will fetch total 100 items at time. if user want to fetch more 100 items then he can use "?$top=5000" or  "?$top=1000" at end reqURL.
+function getDataFromSPList() {
+
+    var reqURL = _spPageContextInfo.webAbsoluteUrl + "/_api/web/lists/getbytitle('Community')/items";
+    var xhrData = {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json; odata=verbose'
+        },
+    };
+    fetch(reqURL, xhrData)
+    .then(function (response) {
+        if (response.ok) {
+            return response.json();
+         }
+         else {
+            throw new Error(response.json());
+         }
+     }).then(function (res) {
+            console.log('success');
+            var data = res.d.results;
+             console.log(data);
+     }).catch(function (error) {
+        console.error('failure.');
+        console.error(error);
+    });
+ }
+
+getDataFromSPList();
+
+//Method 2-It is written in JavScrit and Jquery. So user need to add jQuery CDN for using it.It will fetch totall 100 data at time.
+//If user want to fetch more 100 items then he can use "?$top=5000" or  "?$top=1000" at end req REST API or url.
+
+//<script src="../library/Assets/Jquery/jquery-2.2.4.min.js"></script>
+//or To Read Data from the SharePoint list in jquery
+function getListItems(){
+    var siteurl = _spPageContextInfo.webAbsoluteUrl;//It will provide the absolute URL  of current SharePoint site.
+    $.ajax({
+           url: siteurl + "/_api/web/lists/getbytitle('Community')/items",//Community is the SharePoint list Name
+           method: "GET",
+           ansyc:false,
+           headers: { "Accept": "application/json; odata=verbose" },
+           success: function (data) {
+                if (data.d.results.length > 0 ) {
+                  console.log(data.d.results);//It is an array of Object or JSON data
+                     //This section can be used to iterate through data and show it on screen
+                }      
+          },
+          error: function (data) {
+              console.error(data);// Object with error
+         }
+      });
+}
+getListItems();
+
+OR
+//Method 2-It is written in JavScrit. To use it user need to load below cdn or script.
+//<script type="text/javascript" src="_layouts/15/sp.js"></script>
+
+//fetch data from a sharePoint List in JavaScript
+//or To Read Data from the SharePoint list using JSOM (JavaScript Object Model)
+var listData, clientContext;
+fetchAllItemsFromSPList();
+function fetchAllItemsFromSPList() {
+    // You can optionally specify the Site URL here to get the context
+    // If you don't specify the URL, the method will get the context of the current site
+    // var clientContext = new SP.ClientContext("http://companyServer/sites/SiteCollection");
+    clientContext = new SP.ClientContext();
+     console.log(clientContext);
+    var currentSite = clientContext.get_web();
+ 
+    // Specify list title here
+    var list = currentSite.get_lists().getByTitle("Community");//Community is the list name from current SP site
+ 
+    // Get all list items from the list
+    // This method will get all the items from all the folders and sub folders including folders and sub folders too
+    listData = list.getItems(SP.CamlQuery.createAllItemsQuery());
+ 
+    // Load list items to Client Context
+    clientContext.load(listData);
+ 
+    // Execute the query to the server.
+    clientContext.executeQueryAsync(
+    function () {
+        console.log('Success');
+        // Iterate through Enumerator
+        var listEnumerator = listData.getEnumerator();
+             console.log(listEnumerator)
+        while (listEnumerator.moveNext()) {
+            // get_item("ColumnName")
+            var listItems = listEnumerator.get_current();
+            var title = listItems.get_item('Title');//Get values from Title default field of list
+            console.log("Name : " + title);
+        }
+    }, function (sender, args) {
+        console.log('Failure');
+        console.error('Error' + args.get_message() + '\n' + args.get_stackTrace());
+    });
+}
+ 
+
